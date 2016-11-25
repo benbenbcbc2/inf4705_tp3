@@ -100,8 +100,9 @@ int main(int argc, char** argv)
 			if (print)
 				std::cout << s;
 			if (time)
-				std::cout << "time (s)"
+				std::cout << "time : "
 					  << elapsed.count()
+					  << 's'
 					  << std::endl;
 		};
 	algorithm->run(p, cb);

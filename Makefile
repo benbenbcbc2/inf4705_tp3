@@ -6,3 +6,6 @@ CPPFLAGS=-std=c++11 -g -O0 -Wall -Werror
 
 ${PROGRAM} : ${SOURCES}
 	${GCC} ${CPPFLAGS} -o ${PROGRAM} ${SOURCES}
+
+clean:
+	rm -rf *.o *.txt *.exe
