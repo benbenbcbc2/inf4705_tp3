@@ -24,21 +24,23 @@ bool hasOpt(int argc, char** argv, const std::string &opt)
 
 void usage(char *progname)
 {
+	const int optw = 35;
 	std::cout << "Usage : " << progname
-		  << " [-h] [-p] [-t] [-f FILE] [-a ALGO]"
+		  << " [-h] [-p] [-t] [-e DATAFILE] [-a ALGO]"
 		  << std::endl;
 	std::cout << "OPTIONS:" << std::endl;
-	std::cout << std::setw(30) << "[ -h/--help]"
+	std::cout << std::setw(optw) << "[ -h/--help]"
 		  << "  Prints this help." << std::endl;
-	std::cout << std::setw(30) << "[ -p/--print]"
+	std::cout << std::setw(optw) << "[ -p/--print]"
 		  << "  Prints the solutions." << std::endl;
-	std::cout << std::setw(30) << "[ -t/--time]"
+	std::cout << std::setw(optw) << "[ -t/--time]"
 		  << "  Prints the time needed to find every solution."
 		  << std::endl;
-	std::cout << std::setw(30) << "[ -f FILE | --file FILE]"
+	std::cout << std::setw(optw) << "[ -e DATAFILE | --data "
+		"DATAFILE]"
 		  << "  The input problem file, defaults to stdin."
 		  << std::endl;
-	std::cout << std::setw(30) << "[ -a ALGO | --algo ALGO]"
+	std::cout << std::setw(optw) << "[ -a ALGO | --algo ALGO]"
 		  << "  The algorithm to use." << std::endl;
 }
 
@@ -62,8 +64,8 @@ int main(int argc, char** argv)
 		hasOpt(argc, argv, "--print");
 	bool time = hasOpt(argc, argv, "-t") ||
 		hasOpt(argc, argv, "--time");
-	char* filepath = getOptArg(argc, argv, "-f") ?:
-		getOptArg(argc, argv, "--file");
+	char* filepath = getOptArg(argc, argv, "-e") ?:
+		getOptArg(argc, argv, "--data");
 	char* algoname = getOptArg(argc, argv, "-a") ?:
 		getOptArg(argc, argv, "--algo");
 
