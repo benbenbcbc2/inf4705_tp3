@@ -33,13 +33,13 @@ protected:
 	TableAlgorithm(std::string name);
 
 	typedef std::function<void(const Solution &s)> solve_cb_t;
-	virtual Solution *solve(const Problem &problem,
-				solve_cb_t callback) = 0;
+	virtual Solution solve(const Problem &problem,
+			       solve_cb_t callback) = 0;
 public:
 	typedef std::function<void(const Solution&,
 				   const std::chrono::duration<float>&)>
 		run_cb_t;
-	Solution *run(const Problem &problem, run_cb_t callback);
+	Solution run(const Problem &problem, run_cb_t callback);
 	std::string getName();
 	virtual ~TableAlgorithm() = default;
 
@@ -54,7 +54,7 @@ public:
 };
 
 class TrivialAlgo : public TableAlgorithm {
-	virtual Solution *solve(const Problem &problem,
+	virtual Solution solve(const Problem &problem,
 				solve_cb_t callback);
 public:
 	TrivialAlgo();

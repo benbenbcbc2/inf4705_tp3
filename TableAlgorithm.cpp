@@ -71,7 +71,7 @@ std::unique_ptr<TableAlgorithm> TableAlgorithm::make(std::string algoname)
 	return std::unique_ptr<TableAlgorithm>(nullptr);
 }
 
-Solution *TableAlgorithm::run(const Problem &problem, run_cb_t callback)
+Solution TableAlgorithm::run(const Problem &problem, run_cb_t callback)
 {
 	this->start = clock_t::now();
 	return this->solve(problem, [this, callback](const Solution &s){
@@ -86,7 +86,8 @@ std::unique_ptr<TableAlgorithm> TrivialAlgo::factory::make()
 	return std::unique_ptr<TrivialAlgo>(new TrivialAlgo());
 }
 
-Solution *TrivialAlgo::solve(const Problem &problem, solve_cb_t callback)
+Solution TrivialAlgo::solve(const Problem &problem, solve_cb_t callback)
 {
-	return nullptr;
+	Solution s;
+	return s;
 }
