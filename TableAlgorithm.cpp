@@ -2,18 +2,18 @@
 
 #include "TableAlgorithm.h"
 
-std::unique_ptr<Problem> Problem::fromStream(std::istream& in)
+Problem Problem::fromStream(std::istream& in)
 {
-	std::unique_ptr<Problem> p(new Problem);
+	Problem p;
 	int n_companies;
-	auto maps = {&p->separate,
-		     &p->want_together,
-		     &p->want_together};
-	in >> p->n_tables;
+	auto maps = {&p.separate,
+		     &p.want_together,
+		     &p.want_together};
+	in >> p.n_tables;
 	in >> n_companies;
-	p->companies.resize(n_companies);
+	p.companies.resize(n_companies);
 	for (int i=0; i<n_companies; ++i)
-		in >> p->companies[i];
+		in >> p.companies[i];
 	for (auto map : maps) {
 		int n_assoc;
 		in >> n_assoc;
@@ -90,4 +90,3 @@ Solution *TrivialAlgo::solve(const Problem &problem, solve_cb_t callback)
 {
 	return nullptr;
 }
-

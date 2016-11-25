@@ -6,7 +6,7 @@
 
 #include "TableAlgorithm.h"
 
-// Simple argument parsing from
+// Simple argument parsing inspired from
 // http://stackoverflow.com/a/868894/2041995
 char* getOptArg(int argc, char** argv, const std::string &opt)
 {
@@ -42,6 +42,17 @@ void usage(char *progname)
 		  << "  The algorithm to use." << std::endl;
 }
 
+void print_algos()
+{
+	std::cout << "The possible algorithms are : " << std::endl;
+	std::cout << "\t {";
+	auto list = TableAlgorithm::list();
+	for (auto it = list.begin(); it != list.end(); ++it)
+		std::cout << *it << std::string ((it==list.end()-1) ?
+						 "}" : ", ")
+			  << std::endl;
+}
+
 int main(int argc, char** argv)
 {
 	// Parse arguments
@@ -62,14 +73,15 @@ int main(int argc, char** argv)
 		algorithm = TableAlgorithm::make(algoname);
 	else
 		algorithm = std::unique_ptr<TableAlgorithm>(new TrivialAlgo());
-	
-	if (help){
+
+	if (help || !algorithm){
 		usage(argv[0]);
+		print_algos();
 		return 1;
 	}
 
 	// Read problem
-	std::unique_ptr<Problem> p;
+	Problem p;
 	if (filepath) {
 		std::ifstream in = std::ifstream(filepath);
 		p = Problem::fromStream(in);
@@ -78,7 +90,7 @@ int main(int argc, char** argv)
 	}
 
 	// Run algo
-	run_cb_t cb =
+	TableAlgorithm::run_cb_t cb =
 		[print, time](
 			const Solution &s,
 			const std::chrono::duration<float> &elapsed)
@@ -90,7 +102,7 @@ int main(int argc, char** argv)
 					  << elapsed.count()
 					  << std::endl;
 		};
-	algorithm->run(*p, cb);
-	
+	algorithm->run(p, cb);
+
 	return 0;
 }
