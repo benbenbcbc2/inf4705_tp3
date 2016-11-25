@@ -30,8 +30,13 @@ Problem Problem::fromStream(std::istream& in)
 std::ostream& operator<<(std::ostream &strm, const Solution &s)
 {
 	for (auto t: s.tables) {
+		bool first = true;
 		for (company_id_t i: t){
-			strm << i << " ";
+			if (first)
+				first = false;
+			else
+				strm << " ";
+			strm << i;
 		}
 		strm << std::endl;
 	}
