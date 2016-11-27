@@ -30,8 +30,13 @@ Problem Problem::fromStream(std::istream& in)
 std::ostream& operator<<(std::ostream &strm, const Solution &s)
 {
 	for (auto t: s.tables) {
+		bool first = true;
 		for (company_id_t i: t){
-			strm << i << " ";
+			if (first)
+				first = false;
+			else
+				strm << " ";
+			strm << i;
 		}
 		strm << std::endl;
 	}
@@ -89,5 +94,15 @@ std::unique_ptr<TableAlgorithm> TrivialAlgo::factory::make()
 Solution TrivialAlgo::solve(const Problem &problem, solve_cb_t callback)
 {
 	Solution s;
+	std::vector<company_id_t> v;
+	v.push_back(5);
+	v.push_back(6);
+	std::vector< std::vector<company_id_t> > test;
+	test.push_back(v);
+	v.push_back(7);
+	v.push_back(1);
+	test.push_back(v);
+	s.tables = test;
+	callback(s);
 	return s;
 }
