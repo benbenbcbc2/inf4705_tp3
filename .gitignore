@@ -1,2 +1,7 @@
-tp3-A16-donnees/
+*~
+*.a
+*.o
 *.pdf
+tp3-A16-donnees/
+runAlgo/runalgo
+
