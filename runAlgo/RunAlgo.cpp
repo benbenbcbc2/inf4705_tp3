@@ -5,6 +5,7 @@
 #include <memory>
 
 #include "TableAlgorithm.h"
+#include "TrivialAlgo.h"
 
 // Simple argument parsing inspired from
 // http://stackoverflow.com/a/868894/2041995
@@ -68,6 +69,10 @@ int main(int argc, char** argv)
 		getOptArg(argc, argv, "--data");
 	char* algoname = getOptArg(argc, argv, "-a") ?:
 		getOptArg(argc, argv, "--algo");
+
+	// initialize algorithms
+	// FIXME should this be somewhere else
+	TableAlgorithm::addAlgorithm(new TrivialAlgo::factory());
 
 	// Choose algorithm
 	std::unique_ptr<TableAlgorithm> algorithm;

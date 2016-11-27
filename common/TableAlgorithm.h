@@ -1,3 +1,6 @@
+#ifndef _COMMON_TABLEALGORITHM_H_
+#define _COMMON_TABLEALGORITHM_H_
+
 #include <chrono>
 #include <functional>
 #include <fstream>
@@ -47,18 +50,12 @@ public:
 	public:
 		virtual std::unique_ptr<TableAlgorithm> make() = 0;
 	};
-	static const std::vector<TableAlgorithm::factory*> algorithms;
+	static std::vector<TableAlgorithm::factory*> algorithms;
 
+	static void addAlgorithm(factory *fact);
 	static std::vector<std::string> list();
 	static std::unique_ptr<TableAlgorithm> make(std::string algoname);
+	static std::unique_ptr<TableAlgorithm> makeDefault();
 };
 
-class TrivialAlgo : public TableAlgorithm {
-	virtual Solution solve(const Problem &problem,
-				solve_cb_t callback);
-public:
-	TrivialAlgo();
-	class factory : public TableAlgorithm::factory {
-		virtual std::unique_ptr<TableAlgorithm> make();
-	};
-};
+#endif // _COMMON_TABLEALGORITHM_H_

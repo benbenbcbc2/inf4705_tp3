@@ -51,9 +51,7 @@ std::string TableAlgorithm::getName()
 	return this->name;
 }
 
-const std::vector<TableAlgorithm::factory*> TableAlgorithm::algorithms {
-	new TrivialAlgo::factory(),
-};
+std::vector<TableAlgorithm::factory*> TableAlgorithm::algorithms;
 
 std::vector<std::string> TableAlgorithm::list()
 {
@@ -76,33 +74,24 @@ std::unique_ptr<TableAlgorithm> TableAlgorithm::make(std::string algoname)
 	return std::unique_ptr<TableAlgorithm>(nullptr);
 }
 
+void TableAlgorithm::addAlgorithm(factory *fact)
+{
+	TableAlgorithm::algorithms.push_back(fact);
+}
+
+std::unique_ptr<TableAlgorithm> makeDefault()
+{
+	try {
+		return TableAlgorithm::algorithms.at(0)->make();
+	} catch (std::out_of_range e) {
+		return std::unique_ptr<TableAlgorithm>(nullptr);
+	}
+}
+
 Solution TableAlgorithm::run(const Problem &problem, run_cb_t callback)
 {
 	this->start = clock_t::now();
 	return this->solve(problem, [this, callback](const Solution &s){
 			callback(s, clock_t::now()-this->start);
 		});
-}
-
-TrivialAlgo::TrivialAlgo() : TableAlgorithm("triv") {}
-
-std::unique_ptr<TableAlgorithm> TrivialAlgo::factory::make()
-{
-	return std::unique_ptr<TrivialAlgo>(new TrivialAlgo());
-}
-
-Solution TrivialAlgo::solve(const Problem &problem, solve_cb_t callback)
-{
-	Solution s;
-	std::vector<company_id_t> v;
-	v.push_back(5);
-	v.push_back(6);
-	std::vector< std::vector<company_id_t> > test;
-	test.push_back(v);
-	v.push_back(7);
-	v.push_back(1);
-	test.push_back(v);
-	s.tables = test;
-	callback(s);
-	return s;
 }

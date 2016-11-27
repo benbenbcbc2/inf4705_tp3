@@ -1,11 +1,7 @@
-PROGRAM=runalgo
-SOURCES=RunAlgo.cpp TableAlgorithm.h TableAlgorithm.cpp
+all :
+	make -C common
+	make -C runAlgo
 
-GCC=g++
-CPPFLAGS=-std=c++11 -g -O0 -Wall -Werror
-
-${PROGRAM} : ${SOURCES}
-	${GCC} ${CPPFLAGS} -o ${PROGRAM} ${SOURCES}
-
-clean:
-	rm -rf *.o *.txt *.exe
+clean :
+	make clean -C common
+	make clean -C runAlgo
