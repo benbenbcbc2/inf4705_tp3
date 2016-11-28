@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <sstream>
 
 #include "TableAlgorithm.h"
 
@@ -41,6 +42,27 @@ std::ostream& operator<<(std::ostream &strm, const Solution &s)
 		strm << std::endl;
 	}
 	strm << "fin" << std::endl;
+	return strm;
+}
+
+std::istream &operator>>(std::istream &strm, Solution& s)
+{
+	s.tables.clear();
+	for (std::string line;
+	     std::getline(strm, line), line != "fin";) {
+		std::vector<company_id_t> table;
+		std::istringstream in(line);
+		in.exceptions(std::ifstream::failbit);
+		for (company_id_t id;;) {
+			if (!in.good())
+				break;
+			in >> id;
+			table.push_back(id);
+		}
+		if (table.empty())
+			strm.setstate(std::istream::failbit);
+		s.tables.push_back(table);
+	}
 	return strm;
 }
 

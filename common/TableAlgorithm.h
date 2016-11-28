@@ -27,6 +27,7 @@ public:
 	std::vector< std::vector<company_id_t> > tables;
 };
 std::ostream &operator<<(std::ostream &strm, const Solution &s);
+std::istream &operator>>(std::istream &strm, Solution &s);
 
 class TableAlgorithm {
 	typedef std::chrono::high_resolution_clock clock_t;
