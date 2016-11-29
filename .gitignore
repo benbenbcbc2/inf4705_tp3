@@ -5,3 +5,7 @@
 tp3-A16-donnees/
 runAlgo/runalgo
 
+cmake-build-debug/
+CMakeLists.txt
+.idea/
+runAlgo/runalgo.exe.stackdump

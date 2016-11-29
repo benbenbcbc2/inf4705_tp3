@@ -9,7 +9,7 @@ Problem Problem::fromStream(std::istream& in)
 	int n_companies;
 	auto maps = {&p.separate,
 		     &p.want_together,
-		     &p.want_together};
+		     &p.want_separate};
 	in >> p.n_tables;
 	in >> n_companies;
 	p.companies.resize(n_companies);

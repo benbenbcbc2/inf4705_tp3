@@ -26,7 +26,7 @@ public:
 class Solution {
 public:
 	std::vector< std::vector<company_id_t> > tables;
-	int quality;
+	float quality;
 };
 std::ostream &operator<<(std::ostream &strm, const Solution &s);
 std::istream &operator>>(std::istream &strm, Solution &s);
