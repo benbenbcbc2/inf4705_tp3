@@ -3,6 +3,7 @@
 #include <iomanip>
 #include <iostream>
 #include <memory>
+#include <string>
 
 #include "TableAlgorithm.h"
 #include "TrivialAlgo.h"
@@ -109,6 +110,7 @@ int main(int argc, char** argv)
 					  << elapsed.count()
 					  << 's'
 					  << std::endl;
+			std::cout << std::endl;
 		};
 	algorithm->run(p, cb);
 

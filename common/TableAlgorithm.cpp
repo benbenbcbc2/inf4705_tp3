@@ -13,8 +13,11 @@ Problem Problem::fromStream(std::istream& in)
 	in >> p.n_tables;
 	in >> n_companies;
 	p.companies.resize(n_companies);
-	for (int i=0; i<n_companies; ++i)
+	p.n_people = 0;
+	for (int i = 0; i < n_companies; ++i) {
 		in >> p.companies[i];
+		p.n_people += p.companies[i];
+	}
 	for (auto map : maps) {
 		int n_assoc;
 		in >> n_assoc;

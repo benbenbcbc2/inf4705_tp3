@@ -14,6 +14,7 @@ typedef int company_id_t;
 class Problem {
 public:
 	int n_tables;
+	int n_people;
 	std::vector<size_t> companies;
 	std::multimap<company_id_t, company_id_t> separate;
 	std::multimap<company_id_t, company_id_t> want_separate;
@@ -25,6 +26,7 @@ public:
 class Solution {
 public:
 	std::vector< std::vector<company_id_t> > tables;
+	int quality;
 };
 std::ostream &operator<<(std::ostream &strm, const Solution &s);
 std::istream &operator>>(std::istream &strm, Solution &s);
