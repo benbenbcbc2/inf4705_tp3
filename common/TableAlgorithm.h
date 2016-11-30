@@ -11,15 +11,22 @@
 
 typedef int company_id_t;
 
+class Solution;
+
+float average(std::vector<unsigned int> list);
+float std_dev(std::vector<unsigned int> list);
+
 class Problem {
 public:
 	int n_tables;
-	std::vector<size_t> companies;
+	std::vector<unsigned int> companies;
 	std::multimap<company_id_t, company_id_t> separate;
 	std::multimap<company_id_t, company_id_t> want_separate;
 	std::multimap<company_id_t, company_id_t> want_together;
 
 	static Problem fromStream(std::istream &in);
+
+	float eval(Solution &s);
 };
 
 class Solution {
