@@ -26,7 +26,7 @@ public:
     static void vecUnion(std::vector<company_id_t>& a, std::vector<company_id_t>& b);
     static void vecIntersection(std::vector<company_id_t>& a, std::vector<company_id_t>& b);
     void addCompany(Company* company, int weight);
-    size_t employees;
+    size_t employees = 0;
     std::vector<company_id_t> companies;
     std::vector<company_id_t> separate;
     std::map <company_id_t, size_t> want_separate;
@@ -34,5 +34,16 @@ public:
     float weight =0.0f;
 };
 
+class TableWithVectors {
+public:
+    TableWithVectors(size_t nbCompanies);
+    void addCompany(Company* company);
+
+    size_t employees = 0;
+    std::vector<company_id_t> companies;
+    std::vector<bool> separate;
+    std::vector<int> want_separate;
+    float weight =0.0f;
+};
 
 #endif //INF4705_TP3_TABLEANDCOMPANIES_H

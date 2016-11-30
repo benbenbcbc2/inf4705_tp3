@@ -115,3 +115,28 @@ Company::Company(company_id_t id, size_t employees)
     this->id = id;
     this->employees = employees;
 }
+
+TableWithVectors::TableWithVectors(size_t nbCompanies)
+{
+    this->separate = std::vector<bool>(nbCompanies, false);
+    this->want_separate = std::vector<int>(nbCompanies, 0);
+}
+
+void TableWithVectors::addCompany(Company* company)
+{
+    companies.push_back(company->id);
+    employees += company->employees;
+    weight += want_separate[company->id];
+    for (size_t separateCompany : company->separate)
+    {
+        separate[separateCompany] = true;
+    }
+    for (size_t wantSeparateCompany : company->want_separate)
+    {
+        want_separate[wantSeparateCompany] += 1;
+    }
+    for (size_t wantTogetherCompany : company->want_together)
+    {
+        want_separate[wantTogetherCompany] -= 1;
+    }
+}

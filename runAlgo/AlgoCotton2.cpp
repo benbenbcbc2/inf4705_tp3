@@ -4,11 +4,17 @@
 #include <climits>		// INT_MAX
 #include <math.h>		// pow
 
-Solution AlgoCotton2::bestSol;
-
 AlgoCotton2::AlgoCotton2() : TableAlgorithm("cotton2") 
 {
-	bestSol.quality = INT_MAX;
+	bestQuality = INT_MAX;
+}
+
+AlgoCotton2::~AlgoCotton2()
+{
+	for (auto company : companies)
+	{
+		delete company;
+	}
 }
 
 std::unique_ptr<TableAlgorithm> AlgoCotton2::factory::make()
@@ -18,25 +24,14 @@ std::unique_ptr<TableAlgorithm> AlgoCotton2::factory::make()
 
 Solution AlgoCotton2::solve(const Problem &problem, solve_cb_t callback)
 {
-	std::map<company_id_t, Company*> companiesToPlace;
-	std::vector<Table> tables(problem.n_tables);
-	setProblem(problem, companiesToPlace, tables);
-	if (!companiesToPlace.empty())
+    size_t nbCompanies = problem.companies.size();
+    std::map<company_id_t, Company*> companiesToPlace;
+    std::vector<TableWithVectors> tables(problem.n_tables, TableWithVectors(nbCompanies));
+	setCompanies(problem, companiesToPlace);
+	if (nbCompanies > 0)
 	{
-		size_t peopleToPlace = problem.n_people;
-		Table& table = tables[0];
-		peopleToPlace -= companiesToPlace[0]->employees;
-		table.addCompany(companiesToPlace[0], 0);
-		companiesToPlace.erase(0);
-		size_t tablesWithPeople = 1;
-		size_t fullTables = 0;
-		placeTheMandatories(tablesWithPeople, fullTables, tables, companiesToPlace, peopleToPlace);
-		size_t average = peopleToPlace / problem.n_tables;
-		recursiveSolving(tablesWithPeople, fullTables, 0, 0, tables, companiesToPlace, 0, peopleToPlace, average, callback);
-		for (auto company : companiesToPlace)
-		{
-			delete company.second;
-		}
+		size_t average = problem.n_people / problem.n_tables;
+		recursiveSolving(0, 0, 1, tables, companiesToPlace, average, callback);
 		std::cout << "FINI!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!";
 		callback(bestSol);
 		return bestSol;
@@ -48,184 +43,170 @@ Solution AlgoCotton2::solve(const Problem &problem, solve_cb_t callback)
 }
 
 
-void AlgoCotton2::setProblem(const Problem &problem, std::map<company_id_t, Company*>& companiesToPlace, std::vector<Table>& tables)
+void AlgoCotton2::setCompanies(const Problem &problem, std::map<company_id_t, Company*>& companies)
 {
-	std::fill(tables.begin(), tables.end(), Table());
+	Company* companyToPlace;
 	for (size_t i = 0; i < problem.companies.size(); i++)
 	{
-		companiesToPlace.insert(std::pair<company_id_t, Company*>(i, new Company(i, problem.companies[i])));
+		companyToPlace = new Company(i, problem.companies[i]);
+		companies.insert(std::pair<company_id_t, Company*>(i, companyToPlace));
+		this->companies.push_back(companyToPlace);
 	}
-	for (auto& separate : problem.separate)
+	for (auto separate : problem.separate)
 	{
-		companiesToPlace[separate.first]->separate.push_back(separate.second);
+        companies[separate.first]->separate.push_back(separate.second);
 	}
-	for (auto& want_separate : problem.want_separate)
+	for (auto want_separate : problem.want_separate)
 	{
-		companiesToPlace[want_separate.first]->want_separate.push_back(want_separate.second);
+		companies[want_separate.first]->want_separate.push_back(want_separate.second);
 	}
-	for (auto& want_together : problem.want_together)
+	for (auto want_together : problem.want_together)
 	{
-		companiesToPlace[want_together.first]->want_together.push_back(want_together.second);
+		companies[want_together.first]->want_together.push_back(want_together.second);
 	}
 }
 
-void AlgoCotton2::placeTheMandatories(size_t& tablesWithPeople, size_t& fullTables, std::vector<Table>& tables, std::map<company_id_t, Company*>& companiesToPlace, size_t& peopleToPlace)
+bool AlgoCotton2::placeTheMandatories(std::vector<TableWithVectors>& tables, std::map<company_id_t, Company*>& companies)
 {
 	std::vector <company_id_t> companiesOK;
-	Table* table;
-	for (size_t i = tablesWithPeople; i < tables.size(); i++)
-	{
-		table = &tables[i];
-		companiesOK = tables[0].separate;
-		if (companiesOK.empty())
-		{
-			return;
-		}
-		for (size_t j = 1; j < i; j++)
-		{
-			Table::vecIntersection(companiesOK, tables[j].separate);
-			if (companiesOK.empty())
-			{
-				return;
-			}	
-		}
-		for (size_t j : companiesOK)
-		{
-			if (companiesToPlace.find(j) != companiesToPlace.end())
-			{
-				peopleToPlace -= companiesToPlace[j]->employees;
-				table->addCompany(companiesToPlace[j], 0);
-				companiesToPlace.erase(j);
-				tablesWithPeople++;
-				break;
-			}
-		}
-	}
+	TableWithVectors* table;
 	bool continueToPlace = true;
 	while (continueToPlace)
 	{
 		continueToPlace = false;
 		for (size_t i = 0; i < tables.size(); i++)
 		{
-			table = &tables[i];
 			if (i == 0)
 			{
-				companiesOK = tables[1].separate;
+				vecBoolToVecInt(tables[1].separate, companiesOK);
 			}
 			else
 			{
-				companiesOK = tables[0].separate;
+				vecBoolToVecInt(tables[0].separate, companiesOK);
 			}
 			if (companiesOK.empty())
 				break;
 			for (size_t j = 0; j < tables.size(); j++)
 			{
 				if (i != j)
-					Table::vecIntersection(companiesOK, tables[j].separate);
+					IntersectionVecIntAndVecBool(companiesOK, tables[j].separate);
 				if (companiesOK.empty())
 					break;
 			}
+			// Test if there is a number that can't go in any table
+			std::vector <company_id_t> companiesThatCantGoAnywhere = companiesOK;
+			IntersectionVecIntAndVecBool(companiesOK, tables[i].separate);
+			if(!companiesThatCantGoAnywhere.empty())
+			{
+				return false;
+			}
 			if (!companiesOK.empty())
 			{
+				table = &tables[i];
 				for (size_t j :companiesOK)
 				{
-					if (companiesToPlace.find(j) != companiesToPlace.end())
+					if (companies.find(j) != companies.end())
 					{
 						continueToPlace = true;
-						peopleToPlace -= companiesToPlace[j]->employees;
-						if (table->want_separate.find(j) != table->want_separate.end())
-						{
-							table->addCompany(companiesToPlace[j], table->want_separate[j]);
-						}
-						else if (table->want_together.find(j) != table->want_together.end())
-						{
-							table->addCompany(companiesToPlace[j], -table->want_together[j]);
-						}
-						else
-						{
-							table->addCompany(companiesToPlace[j], 0);
-						}
-						companiesToPlace.erase(j);
+						table->addCompany(companies[j]);
+						companies.erase(j);
 					}
 				}
 			}
 		}
 	}
+	return true;
 }
 
-void AlgoCotton2::recursiveSolving(size_t tablesWithPeople, size_t fullTables, size_t companyToAdd, size_t tableToAddTo, std::vector<Table> tables, std::map<company_id_t, Company*> companiesToPlace, int weight, size_t peopleToPlace, size_t& averagePerTable, solve_cb_t& callback)
+void AlgoCotton2::recursiveSolving(company_id_t companyToAdd, size_t tableToAddTo, size_t nextTableToPlaceTo, std::vector<TableWithVectors> tables, std::map<company_id_t, Company*> companiesToPlace, size_t& averagePerTable, solve_cb_t& callback)
 {
-	Solution sol;
-	Table& table = tables[tableToAddTo];
-	if (companyToAdd != 0)
+	TableWithVectors& table = tables[tableToAddTo];
+	table.addCompany(companiesToPlace[companyToAdd]);
+	companiesToPlace.erase(companyToAdd);
+	if(!placeTheMandatories(tables, companiesToPlace))
 	{
-		peopleToPlace -= companiesToPlace[companyToAdd]->employees;
-		table.addCompany(companiesToPlace[companyToAdd], weight);
-		companiesToPlace.erase(companyToAdd);
+		return;
 	}
-	if (tableToAddTo == tablesWithPeople)
-	{
-		tablesWithPeople++;
-	}
-	placeTheMandatories(tablesWithPeople, fullTables, tables, companiesToPlace, peopleToPlace);
+
 	if (companiesToPlace.empty())
 	{
-		sol.quality = 0.0f;
+        Solution sol;
+		float quality = 0.0f;
 		float S1 = 0.0f;
 		float S2 = 0.0f;
 
 		for (auto& table : tables)
 		{
 			sol.tables.push_back(table.companies);
-			sol.quality += table.weight;
+			quality += table.weight;
 			S1 += table.employees;
 			S2 += pow(table.employees, 2);
 		}
 		float average = S1 / tables.size();
 		float variance = S2 / tables.size() - pow(average,2);
 		float deviation = sqrt(variance);
-		sol.quality += deviation;
-		if (sol.quality < bestSol.quality)
+		quality += deviation;
+		if (quality < bestQuality)
 		{
 			bestSol = sol;
-			std::cout << "QUALITY : " << sol.quality << std::endl << std::flush;
+            bestQuality = quality;
+			std::cout << "QUALITY : " << quality << std::endl << std::flush;
 			callback(sol);
 		}
 	}
 	else
 	{
-		if (table.employees >= averagePerTable - 2 && table.employees <= averagePerTable + 2 && tableToAddTo != tables.size() - 1)
+		company_id_t nextCompanyToAdd = companiesToPlace.begin()->first;
+		size_t tableNb;
+		//size_t companyEmployees = companiesToPlace.begin()->second->employees;
+		for (size_t i = 0; i < tables.size(); i++)
 		{
-			size_t newAverage = peopleToPlace / (tables.size() - tableToAddTo - 1);
-			recursiveSolving(tablesWithPeople, fullTables + 1, companiesToPlace.begin()->first, tableToAddTo + 1, tables, companiesToPlace, 0, peopleToPlace, newAverage, callback);
+			tableNb = (nextTableToPlaceTo+i)%tables.size();
+			if(!tables[tableNb].separate[nextCompanyToAdd] && tables[tableNb].want_separate[nextCompanyToAdd] < 0)
+			{
+				recursiveSolving(nextCompanyToAdd, tableNb, (tableNb+1)%tables.size(), tables, companiesToPlace, averagePerTable, callback);
+			}
 		}
-		if (table.employees < averagePerTable + 2 || tableToAddTo == tables.size() - 1)
+		for (size_t i = 0; i < tables.size(); i++)
 		{
-			for (auto& want_together : table.want_together)
+			tableNb = (nextTableToPlaceTo+i)%tables.size();
+			if(!tables[tableNb].separate[nextCompanyToAdd] && tables[tableNb].want_separate[nextCompanyToAdd]  == 0)
 			{
-				if (companiesToPlace.find(want_together.first) != companiesToPlace.end())
-				{
-					recursiveSolving(tablesWithPeople, fullTables, want_together.first, tableToAddTo, tables, companiesToPlace, -want_together.second, peopleToPlace, averagePerTable, callback);
-				}
+				recursiveSolving(nextCompanyToAdd, tableNb, (tableNb+1)%tables.size(), tables, companiesToPlace, averagePerTable, callback);
 			}
-			std::vector < company_id_t> companiesOK;
-			for (auto it = companiesToPlace.begin(); it != companiesToPlace.end(); ++it)
+		}
+		for (size_t i = 0; i < tables.size(); i++)
+		{
+			tableNb = (nextTableToPlaceTo+i)%tables.size();
+			if(!tables[tableNb].separate[nextCompanyToAdd] && tables[tableNb].want_separate[nextCompanyToAdd] > 0)
 			{
-				companiesOK.push_back(it->first);
-			}
-			Table::vecDifference(companiesOK, table.want_separate);
-			Table::vecDifference(companiesOK, table.separate);
-			for (auto& company : companiesOK)
-			{
-				recursiveSolving(tablesWithPeople, fullTables, company, tableToAddTo, tables, companiesToPlace, 0, peopleToPlace, averagePerTable, callback);
-			}
-			for (auto& want_separate : table.want_separate)
-			{
-				if (companiesToPlace.find(want_separate.first) != companiesToPlace.end())
-				{
-					recursiveSolving(tablesWithPeople, fullTables, want_separate.first, tableToAddTo, tables, companiesToPlace, want_separate.second, peopleToPlace, averagePerTable, callback);
-				}
+				recursiveSolving(nextCompanyToAdd, tableNb, (tableNb+1)%tables.size(), tables, companiesToPlace, averagePerTable, callback);
 			}
 		}
 	}
+}
+
+void AlgoCotton2::vecBoolToVecInt(std::vector<bool>& vecBool, std::vector<int>& vecInt)
+{
+    for (size_t i = 0; i < vecBool.size(); i++)
+    {
+        if(vecBool[i])
+        {
+			vecInt.push_back(i);
+        }
+    }
+}
+
+std::vector<int>& AlgoCotton2::IntersectionVecIntAndVecBool(std::vector<int>& vecInt, std::vector<bool>& vecBool)
+{
+    std::vector<int> temp;
+    for(auto it = vecInt.begin(); it != vecInt.end();it++)
+    {
+        if (vecBool[*it])
+        {
+            temp.push_back(*it);
+        }
+    }
+	vecInt = temp;
+    return vecInt;
 }

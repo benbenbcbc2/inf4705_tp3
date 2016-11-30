@@ -4,11 +4,17 @@
 #include <climits>		// INT_MAX
 #include <math.h>		// pow
 
-Solution AlgoCotton1::bestSol;
-
 AlgoCotton1::AlgoCotton1() : TableAlgorithm("cotton1")
 {
-	bestSol.quality = INT_MAX;
+	bestQuality = INT_MAX;
+}
+
+AlgoCotton1::~AlgoCotton1()
+{
+	for (auto company : companies)
+	{
+		delete company;
+	}
 }
 
 std::unique_ptr<TableAlgorithm> AlgoCotton1::factory::make()
@@ -19,7 +25,7 @@ std::unique_ptr<TableAlgorithm> AlgoCotton1::factory::make()
 Solution AlgoCotton1::solve(const Problem &problem, solve_cb_t callback)
 {
 	std::map<company_id_t, Company*> companiesToPlace;
-	std::vector<Table> tables(problem.n_tables);
+	std::vector<Table> tables(problem.n_tables, Table());
 	setProblem(problem, companiesToPlace, tables);
 	if (!companiesToPlace.empty())
 	{
@@ -33,10 +39,6 @@ Solution AlgoCotton1::solve(const Problem &problem, solve_cb_t callback)
 		placeTheMandatories(tablesWithPeople, fullTables, tables, companiesToPlace, peopleToPlace);
 		size_t average = peopleToPlace / problem.n_tables;
 		recursiveSolving(tablesWithPeople, fullTables, 0, 0, tables, companiesToPlace, 0, peopleToPlace, average, callback);
-		for (auto company : companiesToPlace)
-		{
-			delete company.second;
-		}
 		std::cout << "FINI!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!";
 		callback(bestSol);
 		return bestSol;
@@ -50,10 +52,12 @@ Solution AlgoCotton1::solve(const Problem &problem, solve_cb_t callback)
 
 void AlgoCotton1::setProblem(const Problem &problem, std::map<company_id_t, Company*>& companiesToPlace, std::vector<Table>& tables)
 {
-	std::fill(tables.begin(), tables.end(), Table());
+	Company* companyToPlace;
 	for (size_t i = 0; i < problem.companies.size(); i++)
 	{
-		companiesToPlace.insert(std::pair<company_id_t, Company*>(i, new Company(i, problem.companies[i])));
+		companyToPlace = new Company(i, problem.companies[i]);
+		companiesToPlace.insert(std::pair<company_id_t, Company*>(i, companyToPlace));
+		companies.push_back(companyToPlace);
 	}
 	for (auto& separate : problem.separate)
 	{
@@ -69,7 +73,8 @@ void AlgoCotton1::setProblem(const Problem &problem, std::map<company_id_t, Comp
 	}
 }
 
-void AlgoCotton1::placeTheMandatories(size_t& tablesWithPeople, size_t& fullTables, std::vector<Table>& tables, std::map<company_id_t, Company*>& companiesToPlace, size_t& peopleToPlace)
+// Returns true if the present placement of companies will inevitably come to a problem
+bool AlgoCotton1::placeTheMandatories(size_t& tablesWithPeople, size_t& fullTables, std::vector<Table>& tables, std::map<company_id_t, Company*>& companiesToPlace, size_t& peopleToPlace)
 {
 	std::vector <company_id_t> companiesOK;
 	Table* table;
@@ -79,14 +84,14 @@ void AlgoCotton1::placeTheMandatories(size_t& tablesWithPeople, size_t& fullTabl
 		companiesOK = tables[0].separate;
 		if (companiesOK.empty())
 		{
-			return;
+			return true;
 		}
 		for (size_t j = 1; j < i; j++)
 		{
 			Table::vecIntersection(companiesOK, tables[j].separate);
 			if (companiesOK.empty())
 			{
-				return;
+				return true;
 			}	
 		}
 		for (size_t j : companiesOK)
@@ -125,6 +130,13 @@ void AlgoCotton1::placeTheMandatories(size_t& tablesWithPeople, size_t& fullTabl
 				if (companiesOK.empty())
 					break;
 			}
+			// Test if there is a number that can't go in any table
+			std::vector <company_id_t> companiesThatCantGoAnywhere = companiesOK;
+			Table::vecIntersection(companiesThatCantGoAnywhere, tables[i].separate);
+			if(!companiesThatCantGoAnywhere.empty())
+			{
+				return false;
+			}
 			if (!companiesOK.empty())
 			{
 				for (size_t j :companiesOK)
@@ -151,11 +163,11 @@ void AlgoCotton1::placeTheMandatories(size_t& tablesWithPeople, size_t& fullTabl
 			}
 		}
 	}
+	return true;
 }
 
 void AlgoCotton1::recursiveSolving(size_t tablesWithPeople, size_t fullTables, size_t companyToAdd, size_t tableToAddTo, std::vector<Table> tables, std::map<company_id_t, Company*> companiesToPlace, int weight, size_t peopleToPlace, size_t& averagePerTable, solve_cb_t& callback)
 {
-	Solution sol;
 	Table& table = tables[tableToAddTo];
 	if (companyToAdd != 0)
 	{
@@ -167,28 +179,33 @@ void AlgoCotton1::recursiveSolving(size_t tablesWithPeople, size_t fullTables, s
 	{
 		tablesWithPeople++;
 	}
-	placeTheMandatories(tablesWithPeople, fullTables, tables, companiesToPlace, peopleToPlace);
+	if (!placeTheMandatories(tablesWithPeople, fullTables, tables, companiesToPlace, peopleToPlace))
+	{
+		return;
+	};
 	if (companiesToPlace.empty())
 	{
-		sol.quality = 0.0f;
+        Solution sol;
+        float quality = 0.0f;
 		float S1 = 0.0f;
 		float S2 = 0.0f;
 
 		for (auto& table : tables)
 		{
 			sol.tables.push_back(table.companies);
-			sol.quality += table.weight;
+			quality += table.weight;
 			S1 += table.employees;
 			S2 += pow(table.employees, 2);
 		}
 		float average = S1 / tables.size();
 		float variance = S2 / tables.size() - pow(average,2);
 		float deviation = sqrt(variance);
-		sol.quality += deviation;
-		if (sol.quality < bestSol.quality)
+		quality += deviation;
+		if (quality < bestQuality)
 		{
 			bestSol = sol;
-			std::cout << "QUALITY : " << sol.quality << std::endl << std::flush;
+            bestQuality = quality;
+			std::cout << "QUALITY : " << quality << std::endl << std::flush;
 			callback(sol);
 		}
 	}
