@@ -115,7 +115,7 @@ int main(int argc, char** argv)
 					  << elapsed.count()
 					  << 's'
 					  << std::endl;
-			std::cout << std::endl;
+			//std::cout << std::endl;
 		};
 	algorithm->run(p, cb);
 
