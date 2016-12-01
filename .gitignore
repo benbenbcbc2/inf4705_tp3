@@ -8,5 +8,4 @@ runAlgo/runalgo
 cmake-build-debug/
 CMakeLists.txt
 .idea/
-runAlgo/runalgo.exe.stackdump
-runAlgo/gdb.exe.stackdump
+*.stackdump

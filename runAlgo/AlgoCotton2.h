@@ -11,7 +11,7 @@ class AlgoCotton2 : public TableAlgorithm {
 	bool placeTheMandatories(std::vector<TableWithVectors>& tables, std::map<company_id_t, Company*>& companies);
 	void recursiveSolving(company_id_t companyToAdd, size_t tableToAddTo, size_t nextTableToPlaceTo, std::vector<TableWithVectors> tables, std::map<company_id_t, Company*> companiesToPlace, size_t& averagePerTable, solve_cb_t& callback);
 	void vecBoolToVecInt(std::vector<bool>& vecBool, std::vector<int>& vecInt);
-	std::vector<int>& IntersectionVecIntAndVecBool(std::vector<int>& vecInt, std::vector<bool>& vecBool);
+	void IntersectionVecIntAndVecBool(std::vector<int>& vecInt, std::vector<bool>& vecBool);
 
 public:
 	AlgoCotton2();

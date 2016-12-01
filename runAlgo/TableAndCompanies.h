@@ -25,7 +25,7 @@ public:
     static void vecUnion(std::map <company_id_t, size_t>& a, std::vector<company_id_t>& b);
     static void vecUnion(std::vector<company_id_t>& a, std::vector<company_id_t>& b);
     static void vecIntersection(std::vector<company_id_t>& a, std::vector<company_id_t>& b);
-    void addCompany(Company* company, int weight);
+    void addCompany(Company* company);
     size_t employees = 0;
     std::vector<company_id_t> companies;
     std::vector<company_id_t> separate;

@@ -5,10 +5,23 @@
 #include "TableAndCompanies.h"
 #include <algorithm>    // std::find
 
-void Table::addCompany(Company* company, int weight)
+void Table::addCompany(Company* company)
 {
     companies.push_back(company->id);
     employees += company->employees;
+    int weight;
+    if (want_separate.find(company->id) != want_separate.end())
+    {
+        weight = want_separate[company->id];
+    }
+    else if (want_together.find(company->id) != want_together.end())
+    {
+        weight = -want_together[company->id];
+    }
+    else
+    {
+        weight = 0;
+    }
     this->weight += weight;
     vecUnion(separate, company->separate);
     for (auto& companyNb : company->want_separate)

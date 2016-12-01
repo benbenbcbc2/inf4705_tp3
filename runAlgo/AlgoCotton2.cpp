@@ -1,6 +1,4 @@
 #include "AlgoCotton2.h"
-#include <algorithm>    // std::sort
-#include <iterator>		// std::back_inserter
 #include <climits>		// INT_MAX
 #include <math.h>		// pow
 
@@ -32,17 +30,11 @@ Solution AlgoCotton2::solve(const Problem &problem, solve_cb_t callback)
 	{
 		size_t average = problem.n_people / problem.n_tables;
 		recursiveSolving(0, 0, 1, tables, companiesToPlace, average, callback);
-		std::cout << "FINI!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!";
-		callback(bestSol);
-		return bestSol;
 	}
-	else
-	{
-		return Solution();
-	}
+    return bestSol;
 }
 
-
+//Place the problem informations in instances of Company class
 void AlgoCotton2::setCompanies(const Problem &problem, std::map<company_id_t, Company*>& companies)
 {
 	Company* companyToPlace;
@@ -55,17 +47,21 @@ void AlgoCotton2::setCompanies(const Problem &problem, std::map<company_id_t, Co
 	for (auto separate : problem.separate)
 	{
         companies[separate.first]->separate.push_back(separate.second);
+        companies[separate.second]->separate.push_back(separate.first);
 	}
 	for (auto want_separate : problem.want_separate)
 	{
 		companies[want_separate.first]->want_separate.push_back(want_separate.second);
+        companies[want_separate.second]->want_separate.push_back(want_separate.first);
 	}
 	for (auto want_together : problem.want_together)
 	{
 		companies[want_together.first]->want_together.push_back(want_together.second);
+        companies[want_together.second]->want_together.push_back(want_together.first);
 	}
 }
 
+// If a company can't be on any table except one, sit it on that table. Return false if a company can't be on any table.
 bool AlgoCotton2::placeTheMandatories(std::vector<TableWithVectors>& tables, std::map<company_id_t, Company*>& companies)
 {
 	std::vector <company_id_t> companiesOK;
@@ -93,18 +89,16 @@ bool AlgoCotton2::placeTheMandatories(std::vector<TableWithVectors>& tables, std
 				if (companiesOK.empty())
 					break;
 			}
-			// Test if there is a number that can't go in any table
-			std::vector <company_id_t> companiesThatCantGoAnywhere = companiesOK;
-			IntersectionVecIntAndVecBool(companiesOK, tables[i].separate);
-			if(!companiesThatCantGoAnywhere.empty())
-			{
-				return false;
-			}
+
 			if (!companiesOK.empty())
 			{
 				table = &tables[i];
 				for (size_t j :companiesOK)
 				{
+                    if(table->separate[j])
+                    {
+                        return false;
+                    }
 					if (companies.find(j) != companies.end())
 					{
 						continueToPlace = true;
@@ -123,62 +117,67 @@ void AlgoCotton2::recursiveSolving(company_id_t companyToAdd, size_t tableToAddT
 	TableWithVectors& table = tables[tableToAddTo];
 	table.addCompany(companiesToPlace[companyToAdd]);
 	companiesToPlace.erase(companyToAdd);
+    // Stop the recursion on this branch if a company can't be sitted to any table
 	if(!placeTheMandatories(tables, companiesToPlace))
 	{
 		return;
 	}
 
-	if (companiesToPlace.empty())
-	{
+    // Everybody is placed!
+	if (companiesToPlace.empty()) {
         Solution sol;
-		float quality = 0.0f;
-		float S1 = 0.0f;
-		float S2 = 0.0f;
+        float quality = 0.0f;
+        float S1 = 0.0f;
+        float S2 = 0.0f;
 
-		for (auto& table : tables)
-		{
-			sol.tables.push_back(table.companies);
-			quality += table.weight;
-			S1 += table.employees;
-			S2 += pow(table.employees, 2);
-		}
-		float average = S1 / tables.size();
-		float variance = S2 / tables.size() - pow(average,2);
-		float deviation = sqrt(variance);
-		quality += deviation;
-		if (quality < bestQuality)
-		{
-			bestSol = sol;
+        for (auto &table : tables) {
+            sol.tables.push_back(table.companies);
+            quality += table.weight;
+            S1 += table.employees;
+            S2 += pow(table.employees, 2);
+        }
+        float average = S1 / tables.size();
+        float variance = S2 / tables.size() - pow(average, 2);
+        float deviation = sqrt(variance);
+        quality += deviation;
+        if (quality < bestQuality) {
+            bestSol = sol;
             bestQuality = quality;
-			std::cout << "QUALITY : " << quality << std::endl << std::flush;
-			callback(sol);
-		}
-	}
+            //std::cout << "QUALITY : " << quality << std::endl << std::flush;
+            callback(sol);
+        }
+    }
+    // If there is still a company to place
 	else
 	{
 		company_id_t nextCompanyToAdd = companiesToPlace.begin()->first;
 		size_t tableNb;
-		//size_t companyEmployees = companiesToPlace.begin()->second->employees;
+        // First of all, try to place the company to a table that wants it.
 		for (size_t i = 0; i < tables.size(); i++)
 		{
 			tableNb = (nextTableToPlaceTo+i)%tables.size();
-			if(!tables[tableNb].separate[nextCompanyToAdd] && tables[tableNb].want_separate[nextCompanyToAdd] < 0)
+            TableWithVectors& table = tables[tableNb];
+			if(!table.companies.empty() && !table.separate[nextCompanyToAdd] && table.want_separate[nextCompanyToAdd] < 0)
 			{
 				recursiveSolving(nextCompanyToAdd, tableNb, (tableNb+1)%tables.size(), tables, companiesToPlace, averagePerTable, callback);
 			}
 		}
+        // Second, try to place the company to a table that doesn't care if they're together or not
 		for (size_t i = 0; i < tables.size(); i++)
 		{
 			tableNb = (nextTableToPlaceTo+i)%tables.size();
-			if(!tables[tableNb].separate[nextCompanyToAdd] && tables[tableNb].want_separate[nextCompanyToAdd]  == 0)
+            TableWithVectors& table = tables[tableNb];
+			if(table.companies.empty() || (!table.separate[nextCompanyToAdd] && table.want_separate[nextCompanyToAdd] == 0))
 			{
 				recursiveSolving(nextCompanyToAdd, tableNb, (tableNb+1)%tables.size(), tables, companiesToPlace, averagePerTable, callback);
 			}
 		}
+        // Finally, try to place it to a table that doesn't want to be seated with it.
 		for (size_t i = 0; i < tables.size(); i++)
 		{
 			tableNb = (nextTableToPlaceTo+i)%tables.size();
-			if(!tables[tableNb].separate[nextCompanyToAdd] && tables[tableNb].want_separate[nextCompanyToAdd] > 0)
+            TableWithVectors& table = tables[tableNb];
+			if(!table.companies.empty() && !table.separate[nextCompanyToAdd] && table.want_separate[nextCompanyToAdd] > 0)
 			{
 				recursiveSolving(nextCompanyToAdd, tableNb, (tableNb+1)%tables.size(), tables, companiesToPlace, averagePerTable, callback);
 			}
@@ -197,7 +196,7 @@ void AlgoCotton2::vecBoolToVecInt(std::vector<bool>& vecBool, std::vector<int>& 
     }
 }
 
-std::vector<int>& AlgoCotton2::IntersectionVecIntAndVecBool(std::vector<int>& vecInt, std::vector<bool>& vecBool)
+void AlgoCotton2::IntersectionVecIntAndVecBool(std::vector<int>& vecInt, std::vector<bool>& vecBool)
 {
     std::vector<int> temp;
     for(auto it = vecInt.begin(); it != vecInt.end();it++)
@@ -208,5 +207,4 @@ std::vector<int>& AlgoCotton2::IntersectionVecIntAndVecBool(std::vector<int>& ve
         }
     }
 	vecInt = temp;
-    return vecInt;
 }

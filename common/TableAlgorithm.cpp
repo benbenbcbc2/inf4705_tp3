@@ -1,7 +1,27 @@
 #include <algorithm>
+#include <cmath>
 #include <sstream>
+#include <unordered_set>
+#include <numeric>
 
 #include "TableAlgorithm.h"
+
+float average(std::vector<unsigned int> list)
+{
+	return float(std::accumulate(list.begin(), list.end(), 0))
+		/ list.size();
+}
+
+float std_dev(std::vector<unsigned int> list)
+{
+	float avg = average(list);
+	float std_dev2 = 0;
+	for (auto i : list) {
+		std_dev2 += std::pow(i - avg, 2);
+	}
+    std_dev2 /=list.size();
+	return std::sqrt(std_dev2);
+}
 
 Problem Problem::fromStream(std::istream& in)
 {
@@ -25,10 +45,71 @@ Problem Problem::fromStream(std::istream& in)
 			company_id_t a, b;
 			in >> a >> b;
 			map->insert(std::make_pair(a, b));
-			map->insert(std::make_pair(b, a));
 		}
 	}
 	return p;
+}
+
+float Problem::eval(Solution &s)
+{
+	// Check that all companies are seated only once
+	std::vector<bool> seated(this->companies.size(), false);
+	for (auto table: s.tables) {
+		for (company_id_t id : table) {
+			try {
+				if (!seated.at(id))
+					seated[id] = true;
+				else
+					return INFINITY;
+			} catch (std::out_of_range &out) {
+				return INFINITY;
+			}
+		}
+	}
+	for (auto s : seated) {
+		if (!s)
+			return INFINITY;
+	}
+	
+	// Calculate cost and check for companies that want to be separate
+	float cost = 0;
+	std::vector<unsigned int> table_sizes;
+	for (auto table : s.tables) {
+		unsigned int table_size = 0;
+		std::unordered_set<company_id_t> set(
+			table.begin(), table.end());
+		for (company_id_t id : table) {
+			table_size += this->companies.at(id);
+			std::initializer_list<std::pair<std::multimap<int, int>*, std::function<float(float)>>> pair_list_actions = {
+				std::make_pair(
+					&this->separate,
+					[](float cost){return INFINITY;}),
+				std::make_pair(
+					&this->want_separate,
+					[](float cost){return cost+1;}),
+				std::make_pair(
+					&this->want_together,
+					[](float cost){return cost-1;}),
+			};
+			for (auto list : pair_list_actions) {
+				for (auto it = list.first->
+					     lower_bound(id);
+				     it != list.first->upper_bound(id);
+				     ++it) {
+					if (set.find(it->second) != set.end()) {
+						auto ret =
+							list.second(cost);
+						if (std::isinf(ret))
+							return ret;
+						else cost = ret;
+					}
+				}
+			}
+		}
+		table_sizes.push_back(table_size);
+	}
+	cost += std_dev(table_sizes);
+	return cost;
 }
 
 std::ostream& operator<<(std::ostream &strm, const Solution &s)
@@ -54,17 +135,22 @@ std::istream &operator>>(std::istream &strm, Solution& s)
 	for (std::string line;
 	     std::getline(strm, line), line != "fin";) {
 		std::vector<company_id_t> table;
-		std::istringstream in(line);
-		in.exceptions(std::ifstream::failbit);
-		for (company_id_t id;;) {
-			if (!in.good())
-				break;
-			in >> id;
-			table.push_back(id);
-		}
-		if (table.empty())
-			strm.setstate(std::istream::failbit);
-		s.tables.push_back(table);
+        if(line.empty()) {
+            s.tables.push_back(table);
+        }
+        else {
+            std::istringstream in(line);
+            in.exceptions(std::ifstream::failbit);
+            for (company_id_t id;;) {
+                if (!in.good())
+                    break;
+                in >> id;
+                table.push_back(id);
+            }
+            if (table.empty())
+                strm.setstate(std::istream::failbit);
+            s.tables.push_back(table);
+        }
 	}
 	return strm;
 }
