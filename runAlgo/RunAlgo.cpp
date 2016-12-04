@@ -55,9 +55,8 @@ void print_algos()
 	std::cout << "\t {";
 	auto list = TableAlgorithm::list();
 	for (auto it = list.begin(); it != list.end(); ++it)
-		std::cout << *it << std::string ((it==list.end()-1) ?
-						 "}" : ", ")
-			  << std::endl;
+		std::cout << *it << ((it==list.end()-1) ? "}" : ", ");
+	std::cout << std::endl;
 }
 
 int main(int argc, char** argv)
