@@ -14,7 +14,8 @@ int main(int argc, char **argv)
 			// Evaluate the quality of the solution and
 			// it's validity
 			std::cout << s << std::endl;
-			std::cout << "quality " << p.eval(s)
+			std::cout << "cost " << p.eval(s)
+				  << " / -" << p.want_together.size()
 				  << std::endl;
 			
 		} catch (std::exception &e) {
