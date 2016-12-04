@@ -1,5 +1,5 @@
 PROGRAM=runalgo
-SOURCES=RunAlgo.cpp TrivialAlgo.cpp
+SOURCES=RunAlgo.cpp TableAndCompanies.cpp TrivialAlgo.cpp AlgoCotton1.cpp AlgoCotton2.cpp
 LIBS=-lTableCommon
 LIBDIR=-L../common
 HEADERS=-I../common

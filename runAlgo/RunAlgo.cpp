@@ -3,9 +3,13 @@
 #include <iomanip>
 #include <iostream>
 #include <memory>
+#include <string>
 
 #include "TableAlgorithm.h"
 #include "TrivialAlgo.h"
+#include "AlgoCotton1.h"
+#include "AlgoCotton2.h"
+
 
 // Simple argument parsing inspired from
 // http://stackoverflow.com/a/868894/2041995
@@ -73,6 +77,8 @@ int main(int argc, char** argv)
 	// initialize algorithms
 	// FIXME should this be somewhere else
 	TableAlgorithm::addAlgorithm(new TrivialAlgo::factory());
+	TableAlgorithm::addAlgorithm(new AlgoCotton1::factory());
+	TableAlgorithm::addAlgorithm(new AlgoCotton2::factory());
 
 	// Choose algorithm
 	std::unique_ptr<TableAlgorithm> algorithm;
@@ -109,6 +115,7 @@ int main(int argc, char** argv)
 					  << elapsed.count()
 					  << 's'
 					  << std::endl;
+			//std::cout << std::endl;
 		};
 	algorithm->run(p, cb);
 

@@ -2,6 +2,7 @@
 #include <cmath>
 #include <sstream>
 #include <unordered_set>
+#include <numeric>
 
 #include "TableAlgorithm.h"
 
@@ -18,6 +19,7 @@ float std_dev(std::vector<unsigned int> list)
 	for (auto i : list) {
 		std_dev2 += std::pow(i - avg, 2);
 	}
+    std_dev2 /=list.size();
 	return std::sqrt(std_dev2);
 }
 
@@ -27,12 +29,15 @@ Problem Problem::fromStream(std::istream& in)
 	int n_companies;
 	auto maps = {&p.separate,
 		     &p.want_together,
-		     &p.want_together};
+		     &p.want_separate};
 	in >> p.n_tables;
 	in >> n_companies;
 	p.companies.resize(n_companies);
-	for (int i=0; i<n_companies; ++i)
+	p.n_people = 0;
+	for (int i = 0; i < n_companies; ++i) {
 		in >> p.companies[i];
+		p.n_people += p.companies[i];
+	}
 	for (auto map : maps) {
 		int n_assoc;
 		in >> n_assoc;
@@ -120,7 +125,7 @@ std::ostream& operator<<(std::ostream &strm, const Solution &s)
 		}
 		strm << std::endl;
 	}
-	strm << "fin";
+	strm << "fin" << std::endl;
 	return strm;
 }
 
@@ -130,17 +135,22 @@ std::istream &operator>>(std::istream &strm, Solution& s)
 	for (std::string line;
 	     std::getline(strm, line), line != "fin";) {
 		std::vector<company_id_t> table;
-		std::istringstream in(line);
-		in.exceptions(std::ifstream::failbit);
-		for (company_id_t id;;) {
-			if (!in.good())
-				break;
-			in >> id;
-			table.push_back(id);
-		}
-		if (table.empty())
-			strm.setstate(std::istream::failbit);
-		s.tables.push_back(table);
+        if(line.empty()) {
+            s.tables.push_back(table);
+        }
+        else {
+            std::istringstream in(line);
+            in.exceptions(std::ifstream::failbit);
+            for (company_id_t id;;) {
+                if (!in.good())
+                    break;
+                in >> id;
+                table.push_back(id);
+            }
+            if (table.empty())
+                strm.setstate(std::istream::failbit);
+            s.tables.push_back(table);
+        }
 	}
 	return strm;
 }

@@ -19,6 +19,7 @@ float std_dev(std::vector<unsigned int> list);
 class Problem {
 public:
 	int n_tables;
+	int n_people;
 	std::vector<unsigned int> companies;
 	std::multimap<company_id_t, company_id_t> separate;
 	std::multimap<company_id_t, company_id_t> want_separate;
