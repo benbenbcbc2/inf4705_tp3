@@ -1,6 +1,6 @@
 PROGRAM=runalgo
-SOURCES=RunAlgo.cpp TableAndCompanies.cpp TrivialAlgo.cpp AlgoCotton1.cpp AlgoCotton2.cpp GraphAlgorithm.cpp
-DEPS=Graph.h TableAndCompanies.h TrivialAlgo.h AlgoCotton1.h AlgoCotton2.h GraphAlgorithm.h filter_iterator.h
+SOURCES=RunAlgo.cpp TableAndCompanies.cpp AlgoCotton1.cpp AlgoCotton2.cpp GraphAlgorithm.cpp
+DEPS=Graph.h TableAndCompanies.h AlgoCotton1.h AlgoCotton2.h GraphAlgorithm.h filter_iterator.h
 LIBS=-lTableCommon
 LIBDIR=-L../common
 HEADERS=-I../common

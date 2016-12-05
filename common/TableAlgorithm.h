@@ -64,7 +64,7 @@ public:
 	static void addAlgorithm(factory *fact);
 	static std::vector<std::string> list();
 	static std::unique_ptr<TableAlgorithm> make(std::string algoname);
-	static std::unique_ptr<TableAlgorithm> makeDefault();
+	static std::unique_ptr<TableAlgorithm> make_default();
 };
 
 #endif // _COMMON_TABLEALGORITHM_H_

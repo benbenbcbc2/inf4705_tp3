@@ -6,7 +6,6 @@
 #include <string>
 
 #include "TableAlgorithm.h"
-#include "TrivialAlgo.h"
 #include "AlgoCotton1.h"
 #include "AlgoCotton2.h"
 #include "GraphAlgorithm.h"
@@ -76,17 +75,16 @@ int main(int argc, char** argv)
 
 	// initialize algorithms
 	// FIXME should this be somewhere else
-	TableAlgorithm::addAlgorithm(new TrivialAlgo::factory());
+	TableAlgorithm::addAlgorithm(new GraphAlgorithm::factory());
 	TableAlgorithm::addAlgorithm(new AlgoCotton1::factory());
 	TableAlgorithm::addAlgorithm(new AlgoCotton2::factory());
-	TableAlgorithm::addAlgorithm(new GraphAlgorithm::factory());
 
 	// Choose algorithm
 	std::unique_ptr<TableAlgorithm> algorithm;
 	if (algoname)
 		algorithm = TableAlgorithm::make(algoname);
 	else
-		algorithm = std::unique_ptr<TableAlgorithm>(new TrivialAlgo());
+		algorithm = TableAlgorithm::make_default();
 
 	if (help || !algorithm){
 		usage(argv[0]);

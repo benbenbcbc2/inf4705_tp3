@@ -192,13 +192,9 @@ void TableAlgorithm::addAlgorithm(factory *fact)
 	TableAlgorithm::algorithms.push_back(fact);
 }
 
-std::unique_ptr<TableAlgorithm> makeDefault()
+std::unique_ptr<TableAlgorithm> TableAlgorithm::make_default()
 {
-	try {
-		return TableAlgorithm::algorithms.at(0)->make();
-	} catch (std::out_of_range e) {
-		return std::unique_ptr<TableAlgorithm>(nullptr);
-	}
+	return TableAlgorithm::algorithms.at(0)->make();
 }
 
 Solution TableAlgorithm::run(const Problem &problem, run_cb_t callback)
