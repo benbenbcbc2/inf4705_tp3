@@ -19,7 +19,7 @@ float std_dev(std::vector<unsigned int> list)
 	for (auto i : list) {
 		std_dev2 += std::pow(i - avg, 2);
 	}
-    std_dev2 /=list.size();
+	std_dev2 /= list.size();
 	return std::sqrt(std_dev2);
 }
 
@@ -125,7 +125,7 @@ std::ostream& operator<<(std::ostream &strm, const Solution &s)
 		}
 		strm << std::endl;
 	}
-	strm << "fin" << std::endl;
+	strm << "fin";
 	return strm;
 }
 

@@ -108,13 +108,12 @@ int main(int argc, char** argv)
 			const std::chrono::duration<float> &elapsed)
 		{
 			if (print)
-				std::cout << s;
+				std::cout << s << std::endl;
 			if (time)
 				std::cout << "time : "
 					  << elapsed.count()
 					  << 's'
 					  << std::endl;
-			//std::cout << std::endl;
 		};
 	algorithm->run(p, cb);
 
