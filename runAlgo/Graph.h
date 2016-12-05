@@ -6,6 +6,7 @@
 #include <unordered_map>
 #include <unordered_set>
 
+#include "unordered_multiset.h"
 #include "filter_iterator.h"
 
 class GroupExcept: public std::exception
@@ -55,17 +56,19 @@ template <class T>
 struct NodeGroup {
 	NodeGroup(float average) {this->average = average;}
 	float average;
-	int people = 0;
+	int people = 0, sep_score = 0, tog_score = 0;
 	std::unordered_set<T> ids;
-	std::unordered_set<T> separate;
-	std::unordered_multiset<T> want_sep;
-	std::unordered_multiset<T> want_tog;
+	jab::unordered_multiset<T> separate;
+	jab::unordered_multiset<T> want_sep;
+	jab::unordered_multiset<T> want_tog;
 	std::vector<Node<T>*> nodes;
 
 	void insert(Node<T> *node) {
 		ids.insert(node->id);
 		nodes.push_back(node);
 		people += node->people;
+		sep_score += want_sep.count(node->id);
+		tog_score += want_tog.count(node->id);
 		separate.insert(node->separate.begin(),
 				node->separate.end());
 		want_sep.insert(node->want_sep.begin(),
@@ -74,14 +77,18 @@ struct NodeGroup {
 				node->want_tog.end());
 	}
 
-	int cost(const Node<T> &node) const {
+	float cost() const {
+		return sep_score - tog_score + people - average;
+	}
+
+	float cost(const Node<T> &node) const {
 		return (want_sep.count(node.id) - want_tog.count(node.id)
 			+ std::max(people - average + node.people,
 				   0.0f));
 	}
 
 	bool can_insert(T id) const {
-		return separate.find(id) == separate.end();
+		return !separate.has(id);
 	}
 
 	NodeGroup<T> split() {
@@ -92,29 +99,27 @@ struct NodeGroup {
 			other.insert(disp);
 			remove(disp);
 		}
-		recalc();
 		return other;
 	}
 	
-private:
 	void remove(const Node<T> *node) {
 		nodes.erase(std::find(nodes.begin(), nodes.end(), node));
 		ids.erase(ids.find(node->id));
 		people -= node->people;
+		sep_score -= want_sep.count(node->id);
+		tog_score -= want_tog.count(node->id);
+		separate.remove(node->separate.begin(),
+				node->separate.end());
+		want_sep.remove(node->want_sep.begin(),
+				node->want_sep.end());
+		want_tog.remove(node->want_tog.begin(),
+				node->want_tog.end()); 
 	}
 
-	void recalc() {
-		separate.clear();
-		want_sep.clear();
-		want_tog.clear();
-		for (auto node: nodes) {
-		separate.insert(node->separate.begin(),
-				node->separate.end());
-		want_sep.insert(node->want_sep.begin(),
-				node->want_sep.end());
-		want_tog.insert(node->want_tog.begin(),
-				node->want_tog.end());			
-		}
+	Node<T> *select() {
+		std::uniform_int_distribution<> dis(0, nodes.size()-1);
+		std::random_device rd;
+		return nodes.at(dis(rd));
 	}
 };
 
@@ -158,6 +163,14 @@ public:
 		return res;
 	}
 
+	static void print_all2(std::unordered_map<T, unsigned int> l) {
+		std::cout << "[";
+		for (auto e: l) {
+			std::cout << e.first << ", ";
+		}
+		std::cout << "]";
+	}
+
 	static void print_all(std::unordered_set<T> l) {
 		std::cout << "[";
 		for (auto e: l) {
@@ -169,13 +182,13 @@ public:
 	static void print_cur(const NodeGroup<T> &current) {
 		print_all(current.ids);
 		std::cout << " ";
-		print_all(current.separate);
+		print_all2(current.separate.map());
 		std::cout << std::endl;
 	}
 
-	std::vector<std::unordered_set<T>> place(
-		float average,
-		unsigned int max_groups) {
+	void place(float average,
+		   unsigned int max_groups,
+		   std::function<void(std::vector<NodeGroup<T>>&)> cb) {
 		std::vector<Node<T>*> sorted_nodes(node_vec);
 		std::sort(sorted_nodes.begin(),
 			  sorted_nodes.end(),
@@ -184,7 +197,6 @@ public:
 			  });
 
 		std::vector<NodeGroup<T>> groups;
-		std::vector<std::unordered_set<T>> ret_groups;
 		for (const auto &node: sorted_nodes) {
 			auto fit = filter_iterator<typename std::vector<NodeGroup<T>>::iterator, std::function<bool(const NodeGroup<T>&)>>(
 				groups.begin(),
@@ -205,10 +217,8 @@ public:
 					throw GroupExcept();
 				groups.emplace_back(average);
 				groups.back().insert(node);
-				print_cur(groups.back()); 
 			} else {
 				fit->insert(node);
-				print_cur(*fit); 
 			}
 		}
 
@@ -222,16 +232,35 @@ public:
 			groups.push_back(it->split());
 		}
 
-		for (auto &group: groups) {
-			ret_groups.push_back(group.ids);
-		}
+		// Refine solution
+		for(;;) {
+			std::sort(groups.begin(),
+				  groups.end(),
+				  [](const NodeGroup<T> &a,
+				     const NodeGroup<T> &b){
+					  return a.cost() > b.cost();
+				  });
 
-		for (auto &c: ret_groups) {
-			print_all(c);
-			std::cout << std::endl;
+			NodeGroup<T> &from = groups.front();
+			Node<T> *node = from.select();
+			from.remove(node);
+			auto fit = filter_iterator<typename std::vector<NodeGroup<T>>::iterator, std::function<bool(const NodeGroup<T>&)>>(
+				groups.begin(),
+				groups.end(),
+				[node](const NodeGroup<T> &group) {
+					return group.can_insert(node->id);
+				});
+			fit = std::max_element(
+				fit, fit.end(),
+				[node](const NodeGroup<T>& a,
+				       const NodeGroup<T>& b){
+					return (a.cost(*node) <
+						b.cost(*node));
+				});
+			fit->insert(node);
+			
+			cb(groups);
 		}
-		
-		return ret_groups;
 	}
 };
 

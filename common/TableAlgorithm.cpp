@@ -50,8 +50,10 @@ Problem Problem::fromStream(std::istream& in)
 	return p;
 }
 
-float Problem::eval(Solution &s)
+float Problem::eval(const Solution &s)
 {
+	// Solution cannot have more tables than given
+	if (s.tables.size() > this->n_tables) return INFINITY;
 	// Check that all companies are seated only once
 	std::vector<bool> seated(this->companies.size(), false);
 	for (auto table: s.tables) {

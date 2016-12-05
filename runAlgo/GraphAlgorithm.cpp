@@ -28,21 +28,24 @@ Solution GraphAlgorithm::solve(const Problem &problem, solve_cb_t callback)
 		g.connect(pair.first, pair.second, Set::WTG);
 	}
 
-	std::vector<std::unordered_set<company_id_t>> tables;
 	try {
-		tables = g.place(problem.n_tables,
-				 (float(problem.n_people)/
-				  problem.n_tables));
+		auto cb = [&s,callback]
+			(std::vector<NodeGroup<company_id_t>>& vec){
+			s.tables.clear();
+			for (auto &g : vec) {
+				s.tables.emplace_back(g.ids.begin(),
+						      g.ids.end());
+			}
+			callback(s);
+		};
+		g.place(float(problem.n_people)/problem.n_tables,
+			problem.n_tables,
+			cb);
 	} catch (GroupExcept &c) {
 		// Return empty solution because we could not satisfy
 		// separate companies constraint
 		std::cout << "ERROR : " << c.what() << std::endl;
 	}
 
-	for (auto &t : tables) {
-		s.tables.emplace_back(t.begin(), t.end());
-	}
-	
-	callback(s);
 	return s;
 }

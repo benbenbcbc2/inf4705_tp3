@@ -18,8 +18,8 @@ float std_dev(std::vector<unsigned int> list);
 
 class Problem {
 public:
-	int n_tables;
-	int n_people;
+	unsigned int n_tables;
+	unsigned int n_people;
 	std::vector<unsigned int> companies;
 	std::multimap<company_id_t, company_id_t> separate;
 	std::multimap<company_id_t, company_id_t> want_separate;
@@ -27,7 +27,7 @@ public:
 
 	static Problem fromStream(std::istream &in);
 
-	float eval(Solution &s);
+	float eval(const Solution &s);
 };
 
 class Solution {

@@ -104,18 +104,22 @@ int main(int argc, char** argv)
 	}
 
 	// Run algo
+	float best_cost = INFINITY, last_cost;
 	TableAlgorithm::run_cb_t cb =
-		[print, time](
+		[print, time, &p, &best_cost, &last_cost](
 			const Solution &s,
 			const std::chrono::duration<float> &elapsed)
 		{
-			if (print)
-				std::cout << s << std::endl;
-			if (time)
-				std::cout << "time : "
-					  << elapsed.count()
-					  << 's'
-					  << std::endl;
+			if ((last_cost = p.eval(s)) < best_cost) {
+				best_cost = last_cost;
+				if (print)
+					std::cout << s << std::endl;
+				if (time)
+					std::cout << "time : "
+						  << elapsed.count()
+						  << 's'
+						  << std::endl;
+			}
 		};
 	algorithm->run(p, cb);
 
