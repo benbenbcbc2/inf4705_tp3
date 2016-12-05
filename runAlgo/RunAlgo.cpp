@@ -9,6 +9,7 @@
 #include "TrivialAlgo.h"
 #include "AlgoCotton1.h"
 #include "AlgoCotton2.h"
+#include "GraphAlgorithm.h"
 
 
 // Simple argument parsing inspired from
@@ -78,6 +79,7 @@ int main(int argc, char** argv)
 	TableAlgorithm::addAlgorithm(new TrivialAlgo::factory());
 	TableAlgorithm::addAlgorithm(new AlgoCotton1::factory());
 	TableAlgorithm::addAlgorithm(new AlgoCotton2::factory());
+	TableAlgorithm::addAlgorithm(new GraphAlgorithm::factory());
 
 	// Choose algorithm
 	std::unique_ptr<TableAlgorithm> algorithm;
