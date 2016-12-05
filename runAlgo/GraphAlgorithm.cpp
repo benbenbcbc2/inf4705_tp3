@@ -15,22 +15,33 @@ Solution GraphAlgorithm::solve(const Problem &problem, solve_cb_t callback)
 
 	// Make a graph of the companies that cannot be together
 	Graph<company_id_t> g;
+	for (unsigned int i = 0; i < problem.companies.size(); ++i) {
+		g.add_node(i, problem.companies[i]);
+	}
 	for (auto pair : problem.separate) {
 		g.connect(pair.first, pair.second);
 	}
-
-	// Use graph coloring to separate them into tables
-	auto opt_col = g.color(problem.n_tables);
-	if (!opt_col.first) {
-		// Return empty solution because we could not satisfy
-		// separate companies constraint
-		std::cout << "ERROR_COLORS" << std::endl;
-		return s;
+	for (auto pair : problem.want_separate) {
+		g.connect(pair.first, pair.second, Set::WSP);
+	}
+	for (auto pair : problem.want_together) {
+		g.connect(pair.first, pair.second, Set::WTG);
 	}
 
-	// TODO use the colored companies to start tables
-	std::vector<std::unordered_set<company_id_t>> &tables;
-	
+	std::vector<std::unordered_set<company_id_t>> tables;
+	try {
+		tables = g.place(problem.n_tables,
+				 (float(problem.n_people)/
+				  problem.n_tables));
+	} catch (GroupExcept &c) {
+		// Return empty solution because we could not satisfy
+		// separate companies constraint
+		std::cout << "ERROR : " << c.what() << std::endl;
+	}
+
+	for (auto &t : tables) {
+		s.tables.emplace_back(t.begin(), t.end());
+	}
 	
 	callback(s);
 	return s;
