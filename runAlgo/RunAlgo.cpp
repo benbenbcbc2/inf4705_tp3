@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <cmath>
 #include <cstdlib>
 #include <iomanip>
 #include <iostream>
@@ -102,7 +103,7 @@ int main(int argc, char** argv)
 	}
 
 	// Run algo
-	float best_cost = INFINITY, last_cost;
+	float best_cost = INFINITY, last_cost = best_cost;
 	TableAlgorithm::run_cb_t cb =
 		[print, time, &p, &best_cost, &last_cost](
 			const Solution &s,
