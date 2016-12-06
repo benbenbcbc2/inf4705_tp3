@@ -18,14 +18,10 @@ PDFLATEX=pdflatex
 ZIPNAME=matricule1_matricule2_tp3
 
 # File and directory locations
-M4SOURCE=rapport.m4
 SOURCE=rapport.tex
 BIBFILE=$(SOURCE:%.tex=%.bib)
 
 rapport: $(SOURCE:%.tex=%.pdf)
-
-${SOURCE} : ${M4SOURCE}
-	m4 ${@:%.tex=%.m4} > $@
 
 $(SOURCE:%.tex=%.pdf) : ${SOURCE}
 	pdflatex --shell-escape $(@:%.pdf=%.tex)
@@ -41,4 +37,5 @@ clean: cleanalgos
 
 dist: all
 	zip ${ZIPNAME} {common,runAlgo,evalSolution}/*.{cpp,h}
+	zip ${ZIPNAME} {common,runAlgo,evalSolution}/Makefile
 	zip ${ZIPNAME} Makefile README.md rapport.{m4,pdf} tp.sh

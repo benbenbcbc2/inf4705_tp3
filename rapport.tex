@@ -1,7 +1,7 @@
-changequote(`<', `>')
-
 \documentclass[letterpaper,12pt,final]{article}
 
+\usepackage{algorithm}
+\usepackage{algpseudocode}
 \usepackage{datatool}
 
 %% For the lab, we want to number the subsections in roman numerals to
@@ -75,7 +75,7 @@ changequote(`<', `>')
 \newcommand{\monTitre}{TP3}
 % Auteurs
 \newcommand{\mesAuteurs}{Jean-Alexandre Barszcz, Benjamin Cotton}
-\newcommand{\mesAuteursX}{}
+\newcommand{\mesAuteursX}{Jean-Alexandre Barszcz, 1692955 \\ Benjamin Cotton, 1734287}
 % Sigle du cours
 \newcommand{\monCoursX}{INF4705}
 % Nom du cours
@@ -171,10 +171,6 @@ seulement par le comportement asymptotique mais par le temps absolu
 requis à nos programmes, nous avons choisit de faire l'implantation en
 \textit{C++} pour éviter les surcoûts inutiles.
 
-\section{Jeux de données}
-
-\hilight{TODO}
-
 \section{Choix de conception}
 
 Le problème n'est pas simple et ne montre pas de façon évidente de
@@ -222,9 +218,9 @@ approximation de l'écart-type.
 La formule qu'on utilise est donc:
 \begin{equation}
   \begin{split}
-    Coût(compagnie, table) & = PoidsAjouté(compagnie, table) \\
+    Coût(compagnie, table) = & PoidsAjouté(compagnie, table) \\
     & + NbPersonnes(table) - NbPersonnesParTable
-    \end{split}
+  \end{split}
 \end{equation}
 
 Pour le raffinement local, on choisit une compagnie au hasard de la
@@ -252,13 +248,140 @@ nouvelle compagnie, on lui crée une nouvelle table.  Si le nombre de
 tables dépasse le nombre de tables donné avec le problème, soit il n'y
 a pas de solution possible, ou notre algorithme vorace a échoué.
 
-Le pseudocode est décrit à la figure ...
+Le pseudocode est décrit à l'algorithme \ref{alg:solinit}. Ce
+pseudocode utilise la structure de donnée NodeGroup qui rassemble
+plusieurs noeuds et qui conserve les voisins dans un
+\lstinline|multiset| pour connaître les voisins et leur multiplicité
+avec un accès en temps constant (la structure sous-jacente est une
+\lstinline|hashmap|). La fonction \lstinline|cost(node, nodeGroup)|
+est donc calculée en temps constant et la fonction
+\lstinline|insert(node,nodeGroup)| prend un temps linéaire avec le
+nombre de voisins, donc $O(n^2)$, $n$ étant le nombre de sommets dans
+le graphe.
 
-\subsection{Première amélioration}
+Puisque le bloc \lstinline|if| à la ligne 6 a une complexité
+temporelle constante, et que le \lstinline|for| à la ligne 5 est donc
+dans $O(n)$. La boucle est donc dominée par le temps d'insertion à la
+ligne 18 et cet algorithme est $O(n^3)$.
+
+\begin{algorithm}
+  \caption{Solution initiale}
+  \label{alg:solinit}
+  \begin{algorithmic}[1]
+    \State $nodeGroups \gets \emptyset$
+    \For {$node \gets sort(nodes, degree(), descending)$}
+    \State $bestGroup \gets nil$
+    \State $bestCost \gets \inf$
+    \For {$ nodeGroup \gets nodeGroups $}
+    \If {$can\_insert(node, nodeGroup)$}
+    \State $addedCost \gets cost(node, nodeGroup)$
+    \If {$addedCost < bestCost$}
+    \State $bestGroup \gets nodeGroup$
+    \State $bestCost \gets addedCost$
+    \EndIf
+    \EndIf
+    \EndFor
+    \If {$ bestGroup = nil $}
+    \State $bestGroup \gets createGroup()$
+    \State $insert(bestGroup, nodeGroups)$
+    \EndIf
+    \State $insert(node, bestGroup)$  \Comment {$O(n^2)$}
+    \EndFor
+  \end{algorithmic}
+\end{algorithm}
+
+\subsection{Réduction initiale}
+
+Afin d'éviter de tomber dans la situation où on aurait trop de groupes
+de sommets. L'algorithme de la section précédente concentre les
+sommets dans le plus petit nombre de groupes possible.  Cela fait
+qu'il reste souvent de tables vide après cette étape.  Afin
+d'équilibrer la situation, on subdivise en deux moitié les groupes les
+plus populeux. Le pseudocode pour y arriver se trouve à l'algorithme
+\ref{alg:red1}.
+
+La fonction \lstinline|split| déplace en moyenne la moitié des noeuds
+d'un groupe à un nouveau groupe. Puisque le temps d'insertion/retrait
+a précédement été évalué à $O(n^2)$, la complexité temporelle de
+\lstinline|split| est donc dans $O(n^3)$.  Ainsi, \lstinline|split|
+domine la boucle \lstinline|while| à la ligne 10 et le temps requis à
+la fonction \lstinline|reduce| se trouve dans $O(n^4)$.
+
+
+\begin{algorithm}
+  \caption{Réduction initiale}
+  \label{alg:red1}
+  \begin{algorithmic}[1]
+    \Function{split}{$nodeGroup$} \Comment {$O(n^3)$}
+    \State $newGroup \gets createGroup()$
+    \State $people \gets nodeGroup.people$
+    \While {$nodegroup > people/2$}
+    \State \textit{Move a node from $nodeGroup$ to $newGroup$}
+    \Comment {$O(n^2)$}
+    \State \Return $newGroup$
+    \EndWhile
+    \EndFunction
+
+    \Function{reduce}{$nodeGroups$,$maxGroups$}
+    \While {$size(nodeGroups) < maxGroups$}
+    \State $popGroup \gets nil$
+    \State $people \gets \inf$    
+    \For {$nodeGroup \gets nodeGroups$}
+    \If {$nodeGroup.people > people$}
+    \State $people \gets nodeGroup.people$
+    \State $popGroup \gets nodeGroup$
+    \EndIf
+    \EndFor
+    \State $newGroup \gets$ \Call{split}{$popGroup$} \Comment {$O(n^3)$}
+    \EndWhile
+    \State \Return $nodeGroups$
+    \EndFunction
+  \end{algorithmic}
+\end{algorithm}
+
+
 
 \subsection{Heuristique d'amélioration locale}
 
+Finalement on applique notre heuristique d'amélioration locale jusqu'à
+ce que l'algorithme soit interrompu. Cet heuristique est décrit à
+l'algorithme \ref{alg:heur}. Chaque tour de boucle est dominé par
+l'insertion et les retrait de sommets de leurs groupes. Le temps de cette section est aussi $O(n^3)$.
+
+\begin{algorithm}
+  \caption{Heuristique d'amélioration locale}
+  \label{alg:heur}
+  \begin{algorithmic}[1]
+    \While {$true$}
+    \State $nodeGroup \gets maximumBy(nodeGroups, cost)$
+    \State $node \gets any(nodeGroup)$
+    \State $remove(node, nodeGroup)$ \Comment {$O(n^2)$}
+    \State $bestGroup \gets nil$
+    \State $bestCost \gets \inf$
+    \For {$ nodeGroup \gets nodeGroups $}
+    \If {$can\_insert(node, nodeGroup)$}
+    \State $addedCost \gets cost(node, nodeGroup)$
+    \If {$addedCost < bestCost$}
+    \State $bestGroup \gets nodeGroup$
+    \State $bestCost \gets addedCost$
+    \EndIf
+    \EndIf
+    \EndFor
+    \State $insert(node, bestGroup)$ \Comment {$O(n^2)$}
+    \EndWhile
+  \end{algorithmic}
+\end{algorithm}
+
 \section{Originalité}
+
+Vu la complexité du problème, il est pas possible de trouver un
+algorithme optimal pour la taille des échantillons donnés et donc nos
+choix d'heuristique font l'originalité de notre approche. En effet,
+ayant choisit d'apporcher le problème des compagnies qui ne peuvent
+pas être assises ensemble comme un problème de coloration de graphe a
+suggéré une simple approche vorace qui nécéssitait une
+heuristique. Nous sommes arrivés à trouver une heuristique simple qui
+réflète le calcul de qualité de solution.
 
 \section{Conclusion}
 
